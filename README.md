@@ -1,7 +1,8 @@
 Team Astra 
+
 Intel Unnati Industrial Training 2025 - Product Category Creation for Healthcare Kiosks in India
 
-*Streamlined Patient Journey from Vitals Check to Doctor Consultation with The Symptom Checker Kiosk*
+**Streamlined Patient Journey from Vitals Check to Doctor Consultation with The Symptom Checker Kiosk**
 
 💡 Our Healthcare Kiosk is a touchscreen-based application that helps users:
    -Input their symptoms in simple language (e.g., "fever," "headache").
