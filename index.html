@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Healthcare Kiosk</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 28px;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        #symptomSearch {
+            width: 100%;
+            padding: 20px;
+            font-size: 24px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        #suggestions {
+            display: none;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .suggestion {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .suggestion:hover {
+            background-color: #f0f7ff;
+        }
+        #selectedSymptoms {
+            min-height: 100px;
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .selected-symptom {
+            background-color: #e1f0ff;
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .remove-btn {
+            margin-left: 10px;
+            cursor: pointer;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        #predictBtn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        #predictBtn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        #result {
+            display: none;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        #consultBtn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 20px;
+            font-size: 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .confidence-meter {
+            height: 30px;
+            background-color: #ecf0f1;
+            border-radius: 15px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .confidence-fill {
+            height: 100%;
+            background-color: #2ecc71;
+            width: 0%;
+            transition: width 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Symptom Checker</h1>
+        
+        <input type="text" id="symptomSearch" placeholder="Type a symptom..." autocomplete="off">
+        <div id="suggestions"></div>
+        
+        <div id="selectedSymptoms"></div>
+        
+        <button id="predictBtn" disabled>Check Diagnosis</button>
+        
+        <div id="result">
+            <h2>Possible Condition:</h2>
+            <p id="diagnosis" style="font-size: 32px; font-weight: bold;"></p>
+            
+            <div class="confidence-meter">
+                <div class="confidence-fill" id="confidenceFill"></div>
+            </div>
+            <p>Confidence: <span id="confidence"></span>%</p>
+            
+            <button id="consultBtn">Consult Doctor Online</button>
+        </div>
+    </div>
+
+    <script>
+        // Symptom data - must match SELECTED_FEATURES in app.py
+        const symptoms = [
+    'abdominal_pain', 'abnormal_menstruation', 'acidity', 'altered_sensorium',
+    'anxiety', 'back_pain', 'blackheads', 'blister', 'blood_in_sputum',
+    'bloody_stool', 'blurred_and_distorted_vision', 'breathlessness', 'bruising',
+    'brittle_nails', 'burning_micturition', 'chest_pain', 'chills', 'cold_hands_and_feets',
+    'coma', 'congestion', 'constipation', 'continuous_feel_of_urine', 'continuous_sneezing',
+    'cough', 'cramps', 'dark_urine', 'depression', 'diarrhoea', 'dischromic_patches',
+    'distention_of_abdomen', 'dizziness', 'drying_and_tingling_lips', 'enlarged_thyroid',
+    'excessive_hunger', 'extra_marital_contacts', 'family_history', 'fast_heart_rate',
+    'fatigue', 'fluid_overload', 'foul_smell_of_urine', 'high_fever', 'hip_joint_pain',
+    'history_of_alcohol_consumption', 'increased_appetite', 'inflammatory_nails',
+    'internal_itching', 'irregular_sugar_level', 'irritability', 'irritation_in_anus',
+    'itching', 'joint_pain', 'knee_pain', 'lack_of_concentration', 'lethargy',
+    'loss_of_appetite', 'loss_of_balance', 'loss_of_smell', 'malaise', 'mild_fever',
+    'mood_swings', 'movement_stiffness', 'mucoid_sputum', 'muscle_pain', 'muscle_weakness',
+    'muscle_wasting', 'nausea', 'neck_pain', 'nodal_skin_eruptions', 'obesity',
+    'pain_behind_the_eyes', 'pain_during_bowel_movements', 'pain_in_anal_region',
+    'palpitations', 'passage_of_gases', 'patches_in_throat', 'phlegm', 'polyuria',
+    'prominent_veins_on_calf', 'puffy_face_and_eyes', 'pus_filled_pimples',
+    'receiving_blood_transfusion', 'receiving_unsterile_injections', 'red_sore_around_nose',
+    'red_spots_over_body', 'redness_of_eyes', 'restlessness', 'runny_nose', 'rusty_sputum',
+    'scurring', 'shivering', 'silver_like_dusting', 'sinus_pressure', 'skin_peeling',
+    'skin_rash', 'slurred_speech', 'small_dents_in_nails', 'spotting_urination',
+    'stiff_neck', 'stomach_bleeding', 'stomach_pain', 'sunken_eyes', 'swelling_joints',
+    'swelling_of_stomach', 'swelled_lymph_nodes', 'swollen_blood_vessels',
+    'swollen_extremeties', 'swollen_legs', 'sweating', 'throat_irritation',
+    'toxic_look_(typhos)', 'ulcers_on_tongue', 'unsteadiness', 'visual_disturbances',
+    'vomiting', 'watering_from_eyes', 'weakness_in_limbs', 'weakness_of_one_body_side',
+    'weight_gain', 'weight_loss', 'yellow_crust_ooze', 'yellow_urine', 'yellowing_of_eyes',
+    'yellowish_skin'
+    ];
+
+        // User-friendly display names
+        const symptomDisplayNames = {
+            'itching': 'Itching',
+            'muscle_pain': 'Muscle Pain',
+            'nodal_skin_eruptions': 'Skin Rashes',
+            'dischromic _patches': 'Skin Discoloration',
+            // Add more mappings as needed...
+        };
+
+        let selectedSymptoms = [];
+        
+        // DOM elements
+        const searchInput = document.getElementById('symptomSearch');
+        const suggestionsDiv = document.getElementById('suggestions');
+        const selectedDiv = document.getElementById('selectedSymptoms');
+        const predictBtn = document.getElementById('predictBtn');
+        const resultDiv = document.getElementById('result');
+        const diagnosisPara = document.getElementById('diagnosis');
+        const confidenceSpan = document.getElementById('confidence');
+        const confidenceFill = document.getElementById('confidenceFill');
+        const consultBtn = document.getElementById('consultBtn');
+
+        // Event listeners
+        searchInput.addEventListener('input', updateSuggestions);
+        searchInput.addEventListener('focus', () => {
+            if (searchInput.value) updateSuggestions();
+        });
+        predictBtn.addEventListener('click', predictDiagnosis);
+        consultBtn.addEventListener('click', startConsultation);
+
+        // Update suggestions based on input
+        function updateSuggestions() {
+            const input = searchInput.value.toLowerCase();
+            if (!input) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            const matches = symptoms.filter(s => 
+                s.toLowerCase().includes(input) && 
+                !selectedSymptoms.includes(s)
+            );
+
+            if (matches.length > 0) {
+                suggestionsDiv.innerHTML = matches.map(m => `
+                    <div class="suggestion" onclick="selectSymptom('${m}')">
+                        ${symptomDisplayNames[m] || m.replace(/_/g, ' ')}
+                    </div>
+                `).join('');
+                suggestionsDiv.style.display = 'block';
+            } else {
+                suggestionsDiv.style.display = 'none';
+            }
+        }
+
+        // Global function for symptom selection
+        window.selectSymptom = function(symptom) {
+            if (!selectedSymptoms.includes(symptom)) {
+                selectedSymptoms.push(symptom);
+                updateSelectedSymptoms();
+                searchInput.value = '';
+                suggestionsDiv.style.display = 'none';
+                searchInput.focus();
+            }
+        };
+
+        // Update selected symptoms display
+        function updateSelectedSymptoms() {
+            selectedDiv.innerHTML = selectedSymptoms.map(s => `
+                <div class="selected-symptom">
+                    ${symptomDisplayNames[s] || s.replace(/_/g, ' ')}
+                    <span class="remove-btn" onclick="removeSymptom('${s}')">×</span>
+                </div>
+            `).join('');
+
+            predictBtn.disabled = selectedSymptoms.length === 0;
+        };
+
+        // Global function for symptom removal
+        window.removeSymptom = function(symptom) {
+            selectedSymptoms = selectedSymptoms.filter(s => s !== symptom);
+            updateSelectedSymptoms();
+        };
+
+        // Predict diagnosis
+        async function predictDiagnosis() {
+            predictBtn.disabled = true;
+            predictBtn.textContent = 'Analyzing...';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symptoms: selectedSymptoms })
+                });
+
+                const data = await response.json();
+                
+                diagnosisPara.textContent = data.disease;
+                const confidencePercent = (data.confidence * 100).toFixed(1);
+                confidenceSpan.textContent = confidencePercent;
+                confidenceFill.style.width = `${confidencePercent}%`;
+                
+                resultDiv.style.display = 'block';
+                
+                // Scroll to result
+                resultDiv.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                alert("Error: " + error.message);
+            } finally {
+                predictBtn.disabled = false;
+                predictBtn.textContent = 'Check Diagnosis';
+            }
+        }
+
+        // Teleconsultation
+        function startConsultation() {
+            // Replace with actual e-Sanjeevani integration
+            window.location.href = `https://esanjeevani.in?ref=kiosk&symptoms=${encodeURIComponent(selectedSymptoms.join(','))}`;
+        }
+    </script>
+</body>
+</html> 
