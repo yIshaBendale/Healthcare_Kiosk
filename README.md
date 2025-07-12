@@ -23,8 +23,8 @@ It’s designed to be:
 📂 Project Structure
 healthcare-kiosk/  
 ├── index.html          # Frontend (HTML/CSS/JS)  
-├── app.py              # Flask backend (currently disabled)  
-├── model.pkl           # ML model (requires scikit-learn)  
+├── app.py              # Backend (Flask)  
+├── model.pkl           # ML model   
 ├── features.json       # Symptom & disease mappings  
 └── README.md           # This file  
 
