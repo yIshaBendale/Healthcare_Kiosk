@@ -5,13 +5,19 @@ Intel Unnati Industrial Training 2025 - Product Category Creation for Healthcare
 **Streamlined Patient Journey from Vitals Check to Doctor Consultation with The Symptom Checker Kiosk**
 
 💡 Our Healthcare Kiosk is a touchscreen-based application that helps users:
+
    -Input their symptoms in simple language (e.g., "fever," "headache").
+   
    -Receive instant feedback about possible conditions.
+   
    -Get guidance on whether to consult a doctor.
 
 It’s designed to be:
+
 ✅ User-friendly (large buttons, clear instructions).
+
 ✅ Fast (no login or paperwork).
+
 ✅ Privacy-focused.
 
 📂 Project Structure
